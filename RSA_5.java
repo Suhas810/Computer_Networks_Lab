@@ -1,0 +1,75 @@
+package crc;
+
+import java.io.BufferedReader;
+import java.io.IOException;
+import java.io.InputStreamReader;
+import java.math.BigInteger;
+import java.util.Random;
+
+public class RSA {
+    private BigInteger p;
+    private BigInteger q;
+    private BigInteger N;
+    private BigInteger phi;
+    private BigInteger e;
+    private BigInteger d;
+    private int bitlength = 1024;
+    private Random r;
+
+    public RSA() {
+        r = new Random();
+        p = BigInteger.probablePrime(bitlength, r);
+        q = BigInteger.probablePrime(bitlength, r);
+        N = p.multiply(q);
+        phi = p.subtract(BigInteger.ONE).multiply(q.subtract(BigInteger.ONE));
+        e = BigInteger.probablePrime(bitlength / 2, r);
+        while (phi.gcd(e).compareTo(BigInteger.ONE) > 0 && e.compareTo(phi) < 0) {
+            e = e.add(BigInteger.ONE);
+        }
+        d = e.modInverse(phi);
+    }
+
+    public RSA(BigInteger e, BigInteger d, BigInteger N) {
+        this.e = e;
+        this.d = d;
+        this.N = N;
+    }
+
+    public static void main(String[] args) throws IOException {
+        RSA rsa = new RSA();
+        BufferedReader in = new BufferedReader(new InputStreamReader(System.in));
+
+        System.out.println("Enter the plain text:");
+        String teststring = in.readLine();
+
+        System.out.println("Encrypting String: " + teststring);
+        System.out.println("String in Bytes: " + bytesToString(teststring.getBytes()));
+
+        // Encrypt
+        byte[] encrypted = rsa.encrypt(teststring.getBytes());
+
+        // Decrypt
+        byte[] decrypted = rsa.decrypt(encrypted);
+
+        System.out.println("Decrypting Bytes: " + bytesToString(decrypted));
+        System.out.println("Decrypted String: " + new String(decrypted));
+    }
+
+    private static String bytesToString(byte[] encrypted) {
+        StringBuilder test = new StringBuilder();
+        for (byte b : encrypted) {
+            test.append(Byte.toString(b));
+        }
+        return test.toString();
+    }
+
+    // Encrypt message
+    public byte[] encrypt(byte[] message) {
+        return (new BigInteger(message)).modPow(e, N).toByteArray();
+    }
+
+    // Decrypt message
+    public byte[] decrypt(byte[] message) {
+        return (new BigInteger(message)).modPow(d, N).toByteArray();
+    }
+}
